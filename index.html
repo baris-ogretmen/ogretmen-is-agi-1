@@ -282,7 +282,7 @@
 
     </main>
 
-    <!-- DİNAMİK DUYURU MODAL (REFERANS KODDAN ALINDI) -->
+    <!-- DİNAMİK DUYURU MODAL (ADMİN TARAFINDAN GİRİLEN) -->
     <div id="user-announcement-modal" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] p-8 w-full max-w-sm text-center shadow-2xl pop-in relative border-4 border-indigo-600">
             <button onclick="document.getElementById('user-announcement-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
@@ -293,7 +293,7 @@
         </div>
     </div>
 
-    <!-- WELCOME POPUP (MEVCUT - EĞER DUYURU YOKSA GÖSTERİLEBİLİR) -->
+    <!-- WELCOME POPUP (VARSAYILAN - ARTIK HEP GÖRÜNÜR) -->
     <div id="welcome-modal" class="fixed inset-0 bg-slate-900/80 z-[90] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative pop-in">
             <button onclick="closeWelcomeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -523,9 +523,6 @@
             populateCitySelects();
             populateRoles();
             
-            // Welcome Pop-up kontrolü (Sadece eğer dinamik popup yoksa gösterilir, o logic aşağıda)
-            // Ama şimdilik animasyon için manuel gizli başlasın
-            
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -572,6 +569,9 @@
                 if (docSnap.exists()) {
                     globalConfig = docSnap.data();
                     applyConfig();
+                } else {
+                    // Config yoksa varsayılan olarak welcome göster
+                    applyConfig();
                 }
             });
         }
@@ -581,14 +581,13 @@
             if(globalConfig.news) {
                 // Güvenli HTML için basit replace veya innerText
                 const marqueeEl = document.getElementById('marquee-text');
-                // Kullanıcı HTML girebilsin diye innerHTML yapıyorum ama dikkatli olmalı (Admin only feature)
-                // Ayrıca marquee düzgün görünsün diye içeriği 2 kez kopyalayabiliriz ama basit metin de yeterli
-                // Kayan yazı içinde iconlar da çalışsın
                 marqueeEl.innerHTML = globalConfig.news;
             }
 
             // 2. Popup Kontrolü
             let showWelcome = true;
+            
+            // Eğer admin özel bir duyuru girdiyse, Welcome'ı ez ve Duyuru'yu göster
             if(globalConfig.popup && globalConfig.popup.trim() !== "") {
                 if(sessionStorage.getItem('last_popup_job') !== globalConfig.popup) {
                     const popupText = globalConfig.popup;
@@ -599,11 +598,14 @@
                     document.getElementById('user-announcement-modal').classList.remove('hidden');
                     sessionStorage.setItem('last_popup_job', globalConfig.popup);
                     showWelcome = false; // Duyuru varsa karşılama ekranını ez
+                } else {
+                     showWelcome = false; // Duyuru görüldü ama yine de Welcome çıkmasın (tercihen)
                 }
             }
 
-            // Eğer duyuru popup'ı çıkmadıysa, standart welcome popup'ı göster (ilk giriş ise)
-            if(showWelcome && !sessionStorage.getItem('welcome_seen')) {
+            // Eğer duyuru popup'ı çıkmadıysa, standart welcome popup'ı göster
+            // (Session check'i kaldırdım ki her yenilemede görünsün, istenirse geri açılabilir)
+            if(showWelcome /* && !sessionStorage.getItem('welcome_seen') */) {
                 setTimeout(() => {
                     document.getElementById('welcome-modal').classList.remove('hidden');
                 }, 800);
@@ -694,7 +696,7 @@
             modal.style.opacity = '0';
             setTimeout(() => {
                 modal.classList.add('hidden');
-                sessionStorage.setItem('welcome_seen', 'true');
+                // sessionStorage.setItem('welcome_seen', 'true'); // İptal ettim ki her seferinde görünsün
             }, 300);
         }
 
