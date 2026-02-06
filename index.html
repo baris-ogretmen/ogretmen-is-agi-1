@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>Öğretmen İş Ağı | Türkiye Geneli</title>
+    <meta name="description" content="Türkiye geneli öğretmen ve eğitim personeli iş ilanları platformu.">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { 
+                        brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 900: '#14532d' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .glass-header { background: rgba(255, 255, 255, 0.98); border-bottom: 1px solid #e2e8f0; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .loader-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .job-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #f1f5f9; overflow: hidden; }
+        .job-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
+        
+        /* Admin Grid */
+        .admin-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; height: 100%; overflow: hidden; }
+        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; overflow-y: auto; } }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <div id="app-loader" class="loader-overlay">
+        <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+        <h2 class="text-xl font-bold text-slate-800">Platform Yükleniyor...</h2>
+        <p class="text-sm text-slate-500 mt-2">İlanlar güncelleniyor.</p>
+    </div>
+
+    <header class="glass-header sticky top-0 z-30 shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3" onclick="location.reload()" style="cursor: pointer;">
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-200">
+                    <i class="fa-solid fa-users-viewfinder text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight text-slate-800">Öğretmen İş Ağı</h1>
+                    <p class="text-[10px] font-bold text-indigo-600 tracking-wider uppercase">Türkiye Geneli İlan Platformu</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="toggleAdminPanel()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition flex items-center justify-center">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                <a href="#ilan-ver" onclick="switchTab('post')" class="hidden md:flex bg-slate-800 text-white px-5 py-2.5 rounded-full text-xs font-bold items-center gap-2 hover:bg-slate-700 transition shadow-lg shadow-slate-200">
+                    <i class="fa-solid fa-plus"></i> Ücretsiz İlan Ver
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-6 max-w-6xl">
+
+        <!-- TAB BUTTONS MOBILE -->
+        <div class="flex p-1.5 bg-white rounded-2xl shadow-sm border border-slate-200 mb-6 md:hidden">
+            <button onclick="switchTab('jobs')" id="tab-btn-jobs" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all text-white bg-indigo-600 shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-list-ul"></i> İlanlar
+            </button>
+            <button onclick="switchTab('post')" id="tab-btn-post" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all text-slate-500 hover:bg-slate-50 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-plus-circle"></i> İlan Ver
+            </button>
+        </div>
+
+        <!-- İLAN LİSTESİ -->
+        <div id="tab-jobs" class="tab-content active">
+            
+            <!-- FİLTRELER -->
+            <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 mb-8">
+                
+                <!-- İLAN TİPİ SEÇİCİ -->
+                <div class="flex p-1 bg-slate-100 rounded-xl mb-5 max-w-lg mx-auto">
+                    <button onclick="setFilterType('all')" id="ft-all" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm">Tümü</button>
+                    <button onclick="setFilterType('institution')" id="ft-institution" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-green-600">İş İlanları</button>
+                    <button onclick="setFilterType('teacher')" id="ft-teacher" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-blue-600">Öğretmenler</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400 text-sm"></i>
+                        <input type="text" id="search-text" onkeyup="applyFilters()" placeholder="Kelime ara..." class="w-full pl-10 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+                    </div>
+                    
+                    <select id="filter-city" onchange="updateDistricts('filter'); applyFilters()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:border-indigo-500 cursor-pointer">
+                        <option value="all">Tüm İller</option>
+                    </select>
+
+                    <select id="filter-role" onchange="applyFilters()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:border-indigo-500 cursor-pointer">
+                        <option value="all">Tüm Branşlar</option>
+                    </select>
+
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-500 bg-slate-50 rounded-xl px-4 border border-slate-200">
+                        <span>Sonuç:</span>
+                        <span id="active-job-count" class="text-indigo-600 text-lg">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- İLAN KARTLARI CONTAINER -->
+            <div id="jobs-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Javascript ile doldurulacak -->
+            </div>
+            
+             <div id="no-jobs-msg" class="hidden text-center py-12">
+                <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300 text-4xl"><i class="fa-solid fa-wind"></i></div>
+                <h3 class="font-bold text-slate-700 text-lg">Hiç ilan bulunamadı.</h3>
+                <p class="text-sm text-slate-500 mt-2">Arama kriterlerinizi değiştirerek tekrar deneyin.</p>
+                <button onclick="resetFilters()" class="mt-6 bg-slate-800 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-slate-700 transition">Filtreleri Temizle</button>
+            </div>
+        </div>
+
+        <!-- İLAN VERME FORMU -->
+        <div id="tab-post" class="tab-content max-w-2xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-100 relative overflow-hidden">
+                
+                <div class="text-center mb-8 relative z-10">
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">Ücretsiz İlan Oluştur</h2>
+                    <p class="text-sm text-slate-500 mt-2 font-medium">Lütfen ilan türünü seçerek bilgileri doldurun.</p>
+                </div>
+
+                <!-- TÜR SEÇİMİ -->
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="postType" value="institution" class="peer sr-only" checked onchange="updateFormLabels()">
+                        <div class="p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-center transition-all peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 hover:bg-white hover:shadow-md">
+                            <div class="text-3xl mb-2 text-green-500"><i class="fa-solid fa-building-user"></i></div>
+                            <div class="font-bold text-sm">KURUM</div>
+                            <div class="text-[10px] opacity-75">Personel Arıyorum</div>
+                        </div>
+                        <div class="absolute top-3 right-3 text-green-600 opacity-0 peer-checked:opacity-100 transition-opacity"><i class="fa-solid fa-circle-check"></i></div>
+                    </label>
+
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="postType" value="teacher" class="peer sr-only" onchange="updateFormLabels()">
+                        <div class="p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-center transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 hover:bg-white hover:shadow-md">
+                            <div class="text-3xl mb-2 text-blue-500"><i class="fa-solid fa-user-graduate"></i></div>
+                            <div class="font-bold text-sm">ÖĞRETMEN</div>
+                            <div class="text-[10px] opacity-75">İş Arıyorum</div>
+                        </div>
+                        <div class="absolute top-3 right-3 text-blue-600 opacity-0 peer-checked:opacity-100 transition-opacity"><i class="fa-solid fa-circle-check"></i></div>
+                    </label>
+                </div>
+
+                <form id="jobForm" class="space-y-5 relative z-10">
+                    
+                    <div>
+                        <label id="lbl-title" class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">İlan Başlığı</label>
+                        <input type="text" id="post-title" placeholder="Örn: Sınıf Öğretmeni Arıyoruz" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 outline-none transition font-semibold" required>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label id="lbl-name" class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Kurum Adı</label>
+                            <input type="text" id="post-company" placeholder="Kurumunuzun adı" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 outline-none transition" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Branş</label>
+                            <select id="post-role" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 outline-none transition" required>
+                                <option value="" disabled selected>Branş Seçiniz...</option>
+                                <!-- JS ile doldurulacak -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">İl</label>
+                            <select id="entry-city" onchange="updateDistricts('entry')" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 outline-none transition" required>
+                                <option value="" disabled selected>İl Seç...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">İlçe</label>
+                            <select id="entry-district" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 outline-none transition" disabled required>
+                                <option value="" disabled selected>Önce İl</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="lbl-desc" class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Detaylar</label>
+                        <textarea id="post-desc" rows="4" placeholder="Aranan özellikler, çalışma şartları vb." class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 outline-none transition" required></textarea>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <h4 class="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-address-book text-indigo-500"></i> İletişim Bilgileri</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Telefon / WhatsApp</label>
+                                <input type="tel" id="post-phone" placeholder="0555 123 45 67" class="w-full bg-white border border-slate-200 text-slate-800 text-sm rounded-lg p-3 outline-none focus:border-indigo-500" required>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">İlgili Kişi</label>
+                                <input type="text" id="post-contact-person" placeholder="Ad Soyad" class="w-full bg-white border border-slate-200 text-slate-800 text-sm rounded-lg p-3 outline-none focus:border-indigo-500" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-2 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                        <input type="checkbox" id="terms" class="mt-1 accent-indigo-600" required>
+                        <label for="terms" class="text-xs text-slate-600">Verdiğim bilgilerin doğruluğunu kabul ediyorum. Uygunsuz veya yanıltıcı ilanların silineceğini biliyorum.</label>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="w-full text-white bg-slate-800 hover:bg-slate-900 focus:ring-4 focus:ring-slate-300 font-bold rounded-xl text-base px-5 py-4 text-center transition-all shadow-lg shadow-slate-300 flex items-center justify-center gap-2 mt-2">
+                        <span>İlanı Yayınla</span>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ADMIN MODAL -->
+    <div id="admin-modal" class="fixed inset-0 bg-slate-900/90 z-50 hidden flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-white rounded-[2rem] p-6 w-full max-w-5xl shadow-2xl h-[85vh] flex flex-col relative overflow-hidden">
+            <button onclick="toggleAdminPanel()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 z-10"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+            
+            <div id="admin-login-view" class="h-full flex flex-col items-center justify-center">
+                <div class="w-16 h-16 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center text-3xl mb-4 shadow-lg"><i class="fa-solid fa-lock"></i></div>
+                <h3 class="text-xl font-bold mb-4 text-slate-800">Yönetici Paneli</h3>
+                <input type="email" id="admin-email" placeholder="E-posta" class="border-2 border-slate-200 p-3 rounded-xl mb-2 w-64 outline-none focus:border-indigo-500 font-bold text-center">
+                <input type="password" id="admin-pass" placeholder="Şifre" class="border-2 border-slate-200 p-3 rounded-xl mb-4 w-64 outline-none focus:border-indigo-500 font-bold text-center">
+                <button onclick="adminLogin()" class="bg-slate-800 text-white px-12 py-3 rounded-xl font-bold hover:bg-slate-700 transition shadow-lg">Giriş Yap</button>
+                <div id="admin-msg" class="text-red-500 text-sm mt-3 font-bold hidden"></div>
+            </div>
+            
+            <div id="admin-controls-view" class="hidden h-full flex flex-col">
+                <div class="flex items-center gap-3 mb-6 border-b pb-4">
+                    <div class="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div><h3 class="font-bold text-lg text-slate-800">İlan Yönetimi</h3><p class="text-xs text-slate-500">Onay bekleyen ve aktif ilanlar.</p></div>
+                    <button onclick="logoutAdmin()" class="ml-auto bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-200">Çıkış</button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto custom-scroll">
+                     <div class="p-3 bg-slate-100 border-b flex justify-between items-center text-xs font-bold text-slate-600 mb-2 rounded-t-lg">
+                        <span>Tüm İlanlar</span>
+                        <span id="admin-record-count" class="bg-white px-2 py-0.5 rounded shadow-sm text-slate-800">0</span>
+                    </div>
+                    <div id="admin-records-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ŞEHİR VERİTABANI
+        const TURKEY_DATA = {
+            "Adana": ["Aladağ","Ceyhan","Çukurova","Feke","İmamoğlu","Karaisalı","Karataş","Kozan","Pozantı","Saimbeyli","Sarıçam","Seyhan","Tufanbeyli","Yumurtalık","Yüreğir"],
+            "Adıyaman": ["Besni","Çelikhan","Gerger","Gölbaşı","Kahta","Merkez","Samsat","Sincik","Tut"],
+            "Afyonkarahisar": ["Başmakçı","Bayat","Bolvadin","Çay","Çobanlar","Dazkırı","Dinar","Emirdağ","Evciler","Hocalar","İhsaniye","İscehisar","Kızılören","Merkez","Sandıklı","Sinanpaşa","Sultandağı","Şuhut"],
+            "Ağrı": ["Diyadin","Doğubayazıt","Eleşkirt","Hamur","Merkez","Patnos","Taşlıçay","Tutak"],
+            "Aksaray": ["Ağaçören","Eskil","Gülağaç","Güzelyurt","Merkez","Ortaköy","Sarıyahşi","Sultanhanı"],
+            "Amasya": ["Göynücek","Gümüşhacıköy","Hamamözü","Merkez","Merzifon","Suluova","Taşova"],
+            "Ankara": ["Akyurt","Altındağ","Ayaş","Bala","Beypazarı","Çamlıdere","Çankaya","Çubuk","Elmadağ","Etimesgut","Evren","Gölbaşı","Güdül","Haymana","Kalecik","Kahramankazan","Keçiören","Kızılcahamam","Mamak","Nallıhan","Polatlı","Pursaklar","Sincan","Şereflikoçhisar","Yenimahalle"],
+            "Antalya": ["Akseki","Aksu","Alanya","Demre","Döşemealtı","Elmalı","Finike","Gazipaşa","Gündoğmuş","İbradı","Kaş","Kemer","Kepez","Konyaaltı","Korkuteli","Kumluca","Manavgat","Muratpaşa","Serik"],
+            "Ardahan": ["Çıldır","Damal","Göle","Hanak","Merkez","Posof"],
+            "Artvin": ["Ardanuç","Arhavi","Borçka","Hopa","Kemalpaşa","Merkez","Murgul","Şavşat","Yusufeli"],
+            "Aydın": ["Bozdoğan","Buharkent","Çine","Didim","Efeler","Germencik","İncirliova","Karacasu","Karpuzlu","Koçarlı","Köşk","Kuşadası","Kuyucak","Nazilli","Söke","Sultanhisar","Yenipazar"],
+            "Balıkesir": ["Altıeylül","Ayvalık","Balya","Bandırma","Bigadiç","Burhaniye","Dursunbey","Edremit","Erdek","Gömeç","Gönen","Havran","İvrindi","Karesi","Kepsut","Manyas","Marmara","Savaştepe","Sındırgı","Susurluk"],
+            "Bartın": ["Amasra","Kurucaşile","Merkez","Ulus"],
+            "Batman": ["Beşiri","Gercüş","Hasankeyf","Kozluk","Merkez","Sason"],
+            "Bayburt": ["Aydıntepe","Demirözü","Merkez"],
+            "Bilecik": ["Bozüyük","Gölpazarı","İnhisar","Merkez","Osmaneli","Pazaryeri","Söğüt","Yenipazar"],
+            "Bingöl": ["Adaklı","Genç","Karlıova","Kiğı","Merkez","Solhan","Yayladere","Yedisu"],
+            "Bitlis": ["Adilcevaz","Ahlat","Güroymak","Hizan","Merkez","Mutki","Tatvan"],
+            "Bolu": ["Dörtdivan","Gerede","Göynük","Kıbrıscık","Mengen","Merkez","Mudurnu","Seben","Yeniçağa"],
+            "Burdur": ["Ağlasun","Altınyayla","Bucak","Çavdır","Çeltikçi","Gölhisar","Karamanlı","Kemer","Merkez","Tefenni","Yeşilova"],
+            "Bursa": ["Büyükorhan","Gemlik","Gürsu","Harmancık","İnegöl","İznik","Karacabey","Keles","Kestel","Mudanya","Mustafakemalpaşa","Nilüfer","Orhaneli","Orhangazi","Osmangazi","Yenişehir","Yıldırım"],
+            "Çanakkale": ["Ayvacık","Bayramiç","Biga","Bozcaada","Çan","Eceabat","Ezine","Gelibolu","Gökçeada","Lapseki","Merkez","Yenice"],
+            "Çankırı": ["Atkaracalar","Bayramören","Çerkeş","Eldivan","Ilgaz","Kızılırmak","Korgun","Kurşunlu","Merkez","Orta","Şabanözü","Yapraklı"],
+            "Çorum": ["Alaca","Bayat","Boğazkale","Dodurga","İskilip","Kargı","Laçin","Mecitözü","Merkez","Oğuzlar","Ortaköy","Osmancık","Sungurlu","Uğurludağ"],
+            "Denizli": ["Acıpayam","Babadağ","Baklan","Bekilli","Beyağaç","Bozkurt","Buldan","Çal","Çameli","Çardak","Çivril","Güney","Honaz","Kale","Merkezefendi","Pamukkale","Sarayköy","Serinhisar","Tavas"],
+            "Diyarbakır": ["Bağlar","Bismil","Çermik","Çınar","Çüngüş","Dicle","Eğil","Ergani","Hani","Hazro","Kayapınar","Kocaköy","Kulp","Lice","Silvan","Sur","Yenişehir"],
+            "Düzce": ["Akçakoca","Cumayeri","Çilimli","Gölyaka","Gümüşova","Kaynaşlı","Merkez","Yığılca"],
+            "Edirne": ["Enez","Havsa","İpsala","Keşan","Lalapaşa","Meriç","Merkez","Süloğlu","Uzunköprü"],
+            "Elazığ": ["Ağın","Alacakaya","Arıcak","Baskil","Karakoçan","Keban","Kovancılar","Maden","Merkez","Palu","Sivrice"],
+            "Erzincan": ["Çayırlı","İliç","Kemah","Kemaliye","Merkez","Otlukbeli","Refahiye","Tercan","Üzümlü"],
+            "Erzurum": ["Aşkale","Aziziye","Çat","Hınıs","Horasan","İspir","Karaçoban","Karayazı","Köprüköy","Narman","Oltu","Olur","Palandöken","Pasinler","Pazaryolu","Şenkaya","Tekman","Tortum","Uzundere","Yakutiye"],
+            "Eskişehir": ["Alpu","Beylikova","Çifteler","Günyüzü","Han","İnönü","Mahmudiye","Mihalgazi","Mihalıççık","Odunpazarı","Sarıcakaya","Seyitgazi","Sivrihisar","Tepebaşı"],
+            "Gaziantep": ["Araban","İslahiye","Karkamış","Nizip","Nurdağı","Oğuzeli","Şahinbey","Şehitkamil","Yavuzeli"],
+            "Giresun": ["Alucra","Bulancak","Çamoluk","Çanakçı","Dereli","Doğankent","Espiye","Eynesil","Görele","Güce","Keşap","Merkez","Piraziz","Şebinkarahisar","Tirebolu","Yağlıdere"],
+            "Gümüşhane": ["Kelkit","Köse","Kürtün","Merkez","Şiran","Torul"],
+            "Hakkari": ["Çukurca","Derecik","Merkez","Şemdinli","Yüksekova"],
+            "Hatay": ["Altınözü","Antakya","Arsuz","Belen","Defne","Dörtyol","Erzin","Hassa","İskenderun","Kırıkhan","Kumlu","Payas","Reyhanlı","Samandağ","Yayladağı"],
+            "Iğdır": ["Aralık","Karakoyunlu","Merkez","Tuzluca"],
+            "Isparta": ["Aksu","Atabey","Eğirdir","Gelendost","Gönen","Keçiborlu","Merkez","Senirkent","Sütçüler","Şarkikaraağaç","Uluborlu","Yalvaç","Yenişarbademli"],
+            "İstanbul": ["Adalar","Arnavutköy","Ataşehir","Avcılar","Bağcılar","Bahçelievler","Bakırköy","Başakşehir","Bayrampaşa","Beşiktaş","Beykoz","Beylikdüzü","Beyoğlu","Büyükçekmece","Çatalca","Çekmeköy","Esenler","Esenyurt","Eyüpsultan","Fatih","Gaziosmanpaşa","Güngören","Kadıköy","Kağıthane","Kartal","Küçükçekmece","Maltepe","Pendik","Sancaktepe","Sarıyer","Silivri","Sultanbeyli","Sultangazi","Şile","Şişli","Tuzla","Ümraniye","Üsküdar","Zeytinburnu"],
+            "İzmir": ["Aliağa","Balçova","Bayındır","Bayraklı","Bergama","Beydağ","Bornova","Buca","Çeşme","Çiğli","Dikili","Foça","Gaziemir","Güzelbahçe","Karabağlar","Karaburun","Karşıyaka","Kemalpaşa","Kınık","Kiraz","Konak","Menderes","Menemen","Narlıdere","Ödemiş","Seferihisar","Selçuk","Tire","Torbalı","Urla"],
+            "Kahramanmaraş": ["Afşin","Andırın","Çağlayancerit","Dulkadiroğlu","Ekinözü","Elbistan","Göksun","Nurhak","Onikişubat","Pazarcık","Türkoğlu"],
+            "Karabük": ["Eflani","Eskipazar","Merkez","Ovacık","Safranbolu","Yenice"],
+            "Karaman": ["Ayrancı","Başyayla","Ermenek","Kazımkarabekir","Merkez","Sarıveliler"],
+            "Kars": ["Akyaka","Arpaçay","Digor","Kağızman","Merkez","Sarıkamış","Selim","Susuz"],
+            "Kastamonu": ["Abana","Ağlı","Araç","Azdavay","Bozkurt","Cide","Çatalzeytin","Daday","Devrekani","Doğanyurt","Hanönü","İhsangazi","İnebolu","Küre","Merkez","Pınarbaşı","Seydiler","Şenpazar","Taşköprü","Tosya"],
+            "Kayseri": ["Akkışla","Bünyan","Develi","Felahiye","Hacılar","İncesu","Kocasinan","Melikgazi","Özvatan","Pınarbaşı","Sarıoğlan","Sarız","Talas","Tomarza","Yahyalı","Yeşilhisar"],
+            "Kırıkkale": ["Bahşılı","Balışeyh","Çelebi","Delice","Karakeçili","Keskin","Merkez","Sulakyurt","Yahşihan"],
+            "Kırklareli": ["Babaeski","Demirköy","Kofçaz","Lüleburgaz","Merkez","Pehlivanköy","Pınarhisar","Vize"],
+            "Kırşehir": ["Akçakent","Akpınar","Boztepe","Çiçekdağı","Kaman","Merkez","Mucur"],
+            "Kilis": ["Elbeyli","Merkez","Musabeyli","Polateli"],
+            "Kocaeli": ["Başiskele","Çayırova","Darıca","Derince","Dilovası","Gebze","Gölcük","İzmit","Kandıra","Karamürsel","Kartepe","Körfez"],
+            "Konya": ["Ahırlı","Akören","Akşehir","Altınekin","Beyşehir","Bozkır","Cihanbeyli","Çeltik","Çumra","Derbent","Derebucak","Doğanhisar","Emirgazi","Ereğli","Güneysınır","Hadim","Halkapınar","Hüyük","Ilgın","Kadınhanı","Karapınar","Karatay","Kulu","Meram","Sarayönü","Selçuklu","Seydişehir","Taşkent","Tuzlukçu","Yalıhüyük","Yunak"],
+            "Kütahya": ["Altıntaş","Aslanapa","Çavdarhisar","Domaniç","Dumlupınar","Emet","Gediz","Hisarcık","Merkez","Pazarlar","Simav","Şaphane","Tavşanlı"],
+            "Malatya": ["Akçadağ","Arapgir","Arguvan","Battalgazi","Darende","Doğanşehir","Doğanyol","Hekimhan","Kale","Kuluncak","Pütürge","Yazıhan","Yeşilyurt"],
+            "Manisa": ["Ahmetli","Akhisar","Alaşehir","Demirci","Gölmarmara","Gördes","Kırkağaç","Köprübaşı","Kula","Salihli","Sarıgöl","Saruhanlı","Selendi","Soma","Şehzadeler","Turgutlu","Yunusemre"],
+            "Mardin": ["Artuklu","Dargeçit","Derik","Kızıltepe","Mazıdağı","Midyat","Nusaybin","Ömerli","Savur","Yeşilli"],
+            "Mersin": ["Akdeniz","Anamur","Aydıncık","Bozyazı","Çamlıyayla","Erdemli","Gülnar","Mezitli","Mut","Silifke","Tarsus","Toroslar","Yenişehir"],
+            "Muğla": ["Bodrum","Dalaman","Datça","Fethiye","Kavaklıdere","Köyceğiz","Marmaris","Menteşe","Milas","Ortaca","Seydikemer","Ula","Yatağan"],
+            "Muş": ["Bulanık","Hasköy","Korkut","Malazgirt","Merkez","Varto"],
+            "Nevşehir": ["Acıgöl","Avanos","Derinkuyu","Gülşehir","Hacıbektaş","Kozaklı","Merkez","Ürgüp"],
+            "Niğde": ["Altunhisar","Bor","Çamardı","Çiftlik","Merkez","Ulukışla"],
+            "Ordu": ["Akkuş","Altınordu","Aybastı","Çamaş","Çatalpınar","Çaybaşı","Fatsa","Gölköy","Gülyalı","Gürgentepe","İkizce","Kabadüz","Kabataş","Korgan","Kumru","Mesudiye","Perşembe","Ulubey","Ünye"],
+            "Osmaniye": ["Bahçe","Düziçi","Hasanbeyli","Kadirli","Merkez","Sumbas","Toprakkale"],
+            "Rize": ["Ardeşen","Çamlıhemşin","Çayeli","Derepazarı","Fındıklı","Güneysu","Hemşin","İkizdere","İyidere","Kalkandere","Merkez","Pazar"],
+            "Sakarya": ["Adapazarı","Akyazı","Arifiye","Erenler","Ferizli","Geyve","Hendek","Karapürçek","Karasu","Kaynarca","Kocaali","Pamukova","Sapanca","Serdivan","Söğütlü","Taraklı"],
+            "Samsun": ["19 Mayıs","Alaçam","Asarcık","Atakum","Ayvacık","Bafra","Canik","Çarşamba","Havza","İlkadım","Kavak","Ladik","Salıpazarı","Tekkeköy","Terme","Vezirköprü","Yakakent"],
+            "Siirt": ["Baykan","Eruh","Kurtalan","Merkez","Pervari","Şirvan","Tillo"],
+            "Sinop": ["Ayancık","Boyabat","Dikmen","Durağan","Erfelek","Gerze","Merkez","Saraydüzü","Türkeli"],
+            "Sivas": ["Akıncılar","Altınyayla","Divriği","Doğanşar","Gemerek","Gölova","Gürün","Hafik","İmranlı","Kangal","Koyulhisar","Merkez","Suşehri","Şarkışla","Ulaş","Yıldızeli","Zara"],
+            "Şanlıurfa": ["Akçakale","Birecik","Bozova","Ceylanpınar","Eyyübiye","Halfeti","Haliliye","Harran","Hilvan","Karaköprü","Siverek","Suruç","Viranşehir"],
+            "Şırnak": ["Beytüşşebap","Cizre","Güçlükonak","İdil","Merkez","Silopi","Uludere"],
+            "Tekirdağ": ["Çerkezköy","Çorlu","Ergene","Hayrabolu","Kapaklı","Malkara","Marmaraereğlisi","Muratlı","Saray","Süleymanpaşa","Şarköy"],
+            "Tokat": ["Almus","Artova","Başçiftlik","Erbaa","Merkez","Niksar","Pazar","Reşadiye","Sulusaray","Turhal","Yeşilyurt","Zile"],
+            "Trabzon": ["Akçaabat","Araklı","Arsin","Beşikdüzü","Çarşıbaşı","Çaykara","Dernekpazarı","Düzköy","Hayrat","Köprübaşı","Maçka","Of","Ortahisar","Sürmene","Şalpazarı","Tonya","Vakfıkebir","Yomra"],
+            "Tunceli": ["Çemişgezek","Hozat","Mazgirt","Merkez","Nazımiye","Ovacık","Pertek","Pülümür"],
+            "Uşak": ["Banaz","Eşme","Karahallı","Merkez","Sivaslı","Ulubey"],
+            "Van": ["Bahçesaray","Başkale","Çaldıran","Çatak","Edremit","Erciş","Gevaş","Gürpınar","İpekyolu","Muradiye","Özalp","Saray","Tuşba"],
+            "Yalova": ["Altınova","Armutlu","Çınarcık","Çiftlikköy","Merkez","Termal"],
+            "Yozgat": ["Akdağmadeni","Aydıncık","Boğazlıyan","Çandır","Çayıralan","Çekerek","Kadışehri","Merkez","Saraykent","Sarıkaya","Sorgun","Şefaatli","Yenifakılı","Yerköy"],
+            "Zonguldak": ["Alaplı","Çaycuma","Devrek","Ereğli","Gökçebey","Kilimli","kozlu","Merkez"]
+        };
+
+        const BRANSLAR = [
+            { label: "Temel Eğitim", options: ["Sınıf Öğretmenliği", "Okul Öncesi Öğretmenliği", "Çocuk Gelişimi"] },
+            { label: "Sayısal", options: ["Matematik (İlköğretim)", "Matematik (Lise)", "Fen Bilimleri", "Fizik", "Kimya", "Biyoloji"] },
+            { label: "Sözel & Eşit Ağırlık", options: ["Türkçe", "Türk Dili ve Edebiyatı", "Tarih", "Coğrafya", "Sosyal Bilgiler", "Felsefe"] },
+            { label: "Yabancı Dil", options: ["İngilizce", "Almanca", "Arapça", "Rusça", "Fransızca"] },
+            { label: "Özel Eğitim & Rehberlik", options: ["Özel Eğitim Öğretmeni", "Rehber Öğretmen / PDR", "Psikolog", "Uzman Öğretici"] },
+            { label: "Rehabilitasyon / Sağlık", options: ["Fizyoterapist", "Dil ve Konuşma Terapisti", "Ergoterapist", "Odyolog"] },
+            { label: "Yetenek", options: ["Beden Eğitimi", "Müzik", "Görsel Sanatlar", "Bilişim Teknolojileri"] },
+            { label: "Diğer", options: ["Din Kültürü", "Yönetici / Müdür", "Eğitim Koçu", "Diğer Personel"] }
+        ];
+        
+        const COLLECTION_NAME = 'is_ilanlari_2026';
+        const CONFIG_DOC = 'is_config/global';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqeO-yQyQPnLsOqKmSNvVH23WPvneIjaU",
+            authDomain: "shaped-totem-481514-c5.firebaseapp.com",
+            projectId: "shaped-totem-481514-c5",
+            storageBucket: "shaped-totem-481514-c5.firebasestorage.app",
+            messagingSenderId: "519295049418",
+            appId: "1:519295049418:web:7d04e18c4ea36bc088de33"
+        };
+        
+        let db, auth, user;
+        let globalJobs = [];
+        let isAdmin = false;
+        let activeFilterType = 'all';
+
+        async function init() {
+            populateCitySelects();
+            populateRoles();
+            
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                onAuthStateChanged(auth, (u) => {
+                    if(u) { 
+                        user = u; 
+                        startRealtimeListener(); 
+                        
+                        if(!u.isAnonymous) {
+                            isAdmin = true;
+                            document.getElementById('admin-login-view').classList.add('hidden');
+                            document.getElementById('admin-controls-view').classList.remove('hidden');
+                        }
+                    } else {
+                        signInAnonymously(auth);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Init error", error);
+                document.querySelector('#app-loader p').innerText = "Bağlantı hatası oluştu.";
+            }
+        }
+
+        function startRealtimeListener() {
+            const q = query(collection(db, COLLECTION_NAME), orderBy('timestamp', 'desc'));
+            onSnapshot(q, (snapshot) => {
+                globalJobs = [];
+                snapshot.forEach(doc => { globalJobs.push({ id: doc.id, ...doc.data() }); });
+                document.getElementById('app-loader').classList.add('hidden');
+                
+                applyFilters();
+                if(isAdmin) renderAdminList(); 
+            });
+        }
+
+        function populateCitySelects() {
+            const entryCity = document.getElementById('entry-city');
+            const filterCity = document.getElementById('filter-city');
+            const cities = Object.keys(TURKEY_DATA).sort();
+            
+            cities.forEach(city => {
+                const opt = `<option value="${city}">${city}</option>`;
+                entryCity.innerHTML += opt;
+                filterCity.innerHTML += opt;
+            });
+        }
+
+        function populateRoles() {
+            const postRole = document.getElementById('post-role');
+            const filterRole = document.getElementById('filter-role');
+
+            BRANSLAR.forEach(group => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = group.label;
+                group.options.forEach(role => {
+                    const opt = document.createElement('option');
+                    opt.value = role;
+                    opt.innerText = role;
+                    optgroup.appendChild(opt);
+                    
+                    const optFilter = opt.cloneNode(true);
+                    filterRole.appendChild(optFilter);
+                });
+                postRole.appendChild(optgroup);
+            });
+        }
+
+        window.updateDistricts = (type) => {
+            const citySelect = document.getElementById(type === 'entry' ? 'entry-city' : 'filter-city');
+            const districtSelect = document.getElementById('entry-district');
+            if(type === 'filter') return; 
+
+            const selectedCity = citySelect.value;
+            districtSelect.innerHTML = '<option value="" disabled selected>İlçe Seç...</option>';
+            
+            if (selectedCity && selectedCity !== 'all' && TURKEY_DATA[selectedCity]) {
+                districtSelect.disabled = false;
+                TURKEY_DATA[selectedCity].sort().forEach(dist => {
+                    districtSelect.innerHTML += `<option value="${dist}">${dist}</option>`;
+                });
+            } else {
+                districtSelect.disabled = true;
+            }
+        };
+
+        window.switchTab = (t) => {
+            document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+            document.getElementById(t === 'jobs' ? 'tab-jobs' : 'tab-post').classList.add('active');
+            
+            const btnJobs = document.getElementById('tab-btn-jobs');
+            const btnPost = document.getElementById('tab-btn-post');
+            const activeClass = "flex-1 py-3 text-sm font-bold rounded-xl transition-all text-white bg-indigo-600 shadow-sm flex items-center justify-center gap-2";
+            const passiveClass = "flex-1 py-3 text-sm font-bold rounded-xl transition-all text-slate-500 hover:bg-slate-50 flex items-center justify-center gap-2";
+            
+            if(btnJobs && btnPost) {
+                btnJobs.className = t === 'jobs' ? activeClass : passiveClass;
+                btnPost.className = t === 'post' ? activeClass : passiveClass;
+            }
+        };
+
+        // --- FORM LOGIC ---
+        window.updateFormLabels = () => {
+            const type = document.querySelector('input[name="postType"]:checked').value;
+            
+            if(type === 'teacher') {
+                document.getElementById('lbl-title').innerText = "Ünvanınız / Branşınız";
+                document.getElementById('post-title').placeholder = "Örn: Sınıf Öğretmeni, Matematikçi...";
+                
+                document.getElementById('lbl-name').innerText = "Ad Soyad";
+                document.getElementById('post-company').placeholder = "Adınız Soyadınız";
+                
+                document.getElementById('lbl-desc').innerText = "Kendinizi Tanıtın / Tecrübeleriniz";
+                document.getElementById('post-desc').placeholder = "Mezuniyet, tecrübe, aradığınız çalışma şekli vb.";
+            } else {
+                document.getElementById('lbl-title').innerText = "İlan Başlığı";
+                document.getElementById('post-title').placeholder = "Örn: Tecrübeli Matematik Öğretmeni Arıyoruz";
+                
+                document.getElementById('lbl-name').innerText = "Kurum Adı";
+                document.getElementById('post-company').placeholder = "Kurumunuzun adı";
+                
+                document.getElementById('lbl-desc').innerText = "Detaylar";
+                document.getElementById('post-desc').placeholder = "İş tanımı, çalışma saatleri, aranan özellikler vb.";
+            }
+        };
+
+        // --- FILTER LOGIC ---
+        window.setFilterType = (type) => {
+            activeFilterType = type;
+            
+            // UI Update
+            document.getElementById('ft-all').className = `flex-1 py-2 rounded-lg text-xs font-bold transition-all ${type==='all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`;
+            document.getElementById('ft-institution').className = `flex-1 py-2 rounded-lg text-xs font-bold transition-all ${type==='institution' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-500 hover:text-green-600'}`;
+            document.getElementById('ft-teacher').className = `flex-1 py-2 rounded-lg text-xs font-bold transition-all ${type==='teacher' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-blue-600'}`;
+            
+            applyFilters();
+        };
+
+        window.applyFilters = () => {
+            const fCity = document.getElementById('filter-city').value;
+            // role filtresi html'de option value='all' olarak kalmış olabilir, onu kontrol et
+            const roleEl = document.getElementById('filter-role');
+            const fRole = roleEl ? roleEl.value : 'all'; // Opsiyonel güvenlik
+            const fText = document.getElementById('search-text').value.toLowerCase();
+
+            let filtered = globalJobs;
+
+            if(activeFilterType !== 'all') {
+                filtered = filtered.filter(j => j.type === activeFilterType);
+            }
+
+            if(fCity !== 'all') filtered = filtered.filter(j => j.city === fCity);
+            // fRole varsa kullan
+            // if(fRole !== 'all') filtered = filtered.filter(j => j.role === fRole);
+            
+            if(fText.length > 0) {
+                filtered = filtered.filter(j => 
+                    j.title.toLowerCase().includes(fText) || 
+                    j.company.toLowerCase().includes(fText) ||
+                    j.role.toLowerCase().includes(fText)
+                );
+            }
+
+            renderJobs(filtered);
+        };
+
+        function renderJobs(jobs) {
+            const container = document.getElementById('jobs-container');
+            const msg = document.getElementById('no-jobs-msg');
+            const countSpan = document.getElementById('active-job-count');
+            
+            container.innerHTML = '';
+            countSpan.innerText = jobs.length;
+
+            if(jobs.length === 0) {
+                msg.classList.remove('hidden');
+                return;
+            }
+            msg.classList.add('hidden');
+
+            jobs.forEach(job => {
+                const date = job.timestamp ? job.timestamp.toDate() : new Date();
+                const diffTime = Math.abs(new Date() - date);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                let timeStr = diffDays <= 1 ? "Yeni" : `${diffDays} gün önce`;
+
+                const cleanPhone = job.phone.replace(/[^0-9]/g, '');
+                const whatsappText = job.type === 'teacher' ? 
+                    `Merhaba ${job.company}, iş ilanınız için yazıyorum.` : 
+                    `Merhaba, ${job.company} ilanınız için yazıyorum.`;
+                const whatsappLink = `https://wa.me/90${cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone}?text=${encodeURIComponent(whatsappText)}`;
+
+                // Style logic
+                const isTeacher = job.type === 'teacher';
+                const gradClass = isTeacher ? 'from-blue-500 to-indigo-600' : 'from-green-500 to-emerald-600';
+                const bgLight = isTeacher ? 'bg-blue-50' : 'bg-green-50';
+                const textDark = isTeacher ? 'text-blue-700' : 'text-green-700';
+                const icon = isTeacher ? 'fa-user-graduate' : 'fa-building';
+                const badgeText = isTeacher ? 'ÖĞRETMEN' : 'KURUM';
+                
+                container.innerHTML += `
+                    <div class="job-card bg-white rounded-2xl flex flex-col h-full relative group">
+                        
+                        <div class="h-1.5 bg-gradient-to-r ${gradClass} w-full absolute top-0 left-0"></div>
+                        
+                        <div class="p-5 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center gap-2">
+                                     <span class="${bgLight} ${textDark} text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider flex items-center gap-1">
+                                        <i class="fa-solid ${icon}"></i> ${badgeText}
+                                     </span>
+                                     <span class="text-[10px] text-slate-400 font-medium">${timeStr}</span>
+                                </div>
+                            </div>
+
+                            <h3 class="font-bold text-slate-800 text-lg leading-tight mb-1">${job.title}</h3>
+                            <p class="${textDark} font-bold text-sm mb-3 flex items-center gap-1">
+                                <span class="truncate">${job.company}</span>
+                                ${isTeacher ? '<i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>' : ''}
+                            </p>
+                            
+                            <div class="flex flex-wrap gap-2 mb-4 text-xs text-slate-500 font-medium">
+                                <span class="flex items-center gap-1 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"><i class="fa-solid fa-location-dot text-slate-300"></i> ${job.city} / ${job.district}</span>
+                                <span class="flex items-center gap-1 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"><i class="fa-solid fa-layer-group text-slate-300"></i> ${job.role}</span>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-5 flex-grow">
+                                <p class="text-xs text-slate-600 line-clamp-4 leading-relaxed">${job.desc}</p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 mt-auto">
+                                <a href="tel:${job.phone}" class="flex items-center justify-center gap-2 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl hover:bg-slate-50 transition text-xs">
+                                    <i class="fa-solid fa-phone"></i> Ara
+                                </a>
+                                <a href="${whatsappLink}" target="_blank" class="flex items-center justify-center gap-2 ${isTeacher ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white font-bold py-2.5 rounded-xl transition text-xs shadow-lg">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i> Mesaj At
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        window.resetFilters = () => {
+            document.getElementById('search-text').value = '';
+            document.getElementById('filter-city').value = 'all';
+            setFilterType('all');
+        }
+
+        document.getElementById('jobForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            
+            const type = document.querySelector('input[name="postType"]:checked').value;
+            const title = document.getElementById('post-title').value;
+            const company = document.getElementById('post-company').value;
+            const role = document.getElementById('post-role').value;
+            const city = document.getElementById('entry-city').value;
+            const district = document.getElementById('entry-district').value;
+            const desc = document.getElementById('post-desc').value;
+            const phone = document.getElementById('post-phone').value;
+            const contactPerson = document.getElementById('post-contact-person').value;
+
+            if(!city || !district) { showToast("Lütfen şehir ve ilçe seçin.", "error"); return; }
+            
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Yayınlanıyor...';
+            btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, COLLECTION_NAME), {
+                    type, title, company, role, city, district, desc, phone, contactPerson,
+                    uid: user ? user.uid : 'anon',
+                    timestamp: serverTimestamp()
+                });
+                
+                showToast("İlanınız başarıyla yayınlandı!", "success");
+                document.getElementById('jobForm').reset();
+                // Reset to default type
+                document.querySelector('input[name="postType"][value="institution"]').checked = true;
+                updateFormLabels();
+                switchTab('jobs');
+            } catch (err) {
+                console.error(err);
+                showToast("Hata: " + err.message, "error");
+            } finally {
+                btn.innerHTML = '<span>İlanı Yayınla</span><i class="fa-solid fa-paper-plane"></i>';
+                btn.disabled = false;
+            }
+        });
+
+        // --- ADMIN ---
+        window.toggleAdminPanel = () => {
+            document.getElementById('admin-modal').classList.toggle('hidden');
+        };
+
+        window.adminLogin = () => {
+            const email = document.getElementById('admin-email').value;
+            const pass = document.getElementById('admin-pass').value;
+            signInWithEmailAndPassword(auth, email, pass)
+                .then(() => {
+                    isAdmin = true;
+                    document.getElementById('admin-login-view').classList.add('hidden');
+                    document.getElementById('admin-controls-view').classList.remove('hidden');
+                    renderAdminList();
+                })
+                .catch(() => document.getElementById('admin-msg').classList.remove('hidden'));
+        };
+
+        window.logoutAdmin = () => signOut(auth).then(() => location.reload());
+
+        window.deleteRecord = async (id) => {
+            if(confirm('İlan silinsin mi?')) {
+                await deleteDoc(doc(db, COLLECTION_NAME, id));
+                renderAdminList();
+            }
+        };
+
+        function renderAdminList() {
+            const list = document.getElementById('admin-records-list');
+            document.getElementById('admin-record-count').innerText = globalJobs.length;
+            list.innerHTML = '';
+            
+            globalJobs.forEach(job => {
+                const bg = job.type === 'teacher' ? 'bg-blue-50 border-blue-100' : 'bg-green-50 border-green-100';
+                list.innerHTML += `
+                    <div class="flex justify-between items-center ${bg} p-3 rounded-lg border mb-2">
+                        <div>
+                            <p class="font-bold text-xs text-slate-800">${job.title}</p>
+                            <p class="text-[10px] text-slate-500">${job.company} | ${job.type === 'teacher' ? 'Öğretmen' : 'Kurum'}</p>
+                        </div>
+                        <button onclick="deleteRecord('${job.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded-full"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        window.showToast = (msg, type='info') => Toastify({ text: msg, duration: 3000, gravity: "top", position: "center", backgroundColor: type==='error'?"#ef4444":"#4f46e5", className: "rounded-lg font-bold text-sm shadow-xl" }).showToast();
+
+        init();
+    </script>
+</body>
+</html>
