@@ -21,6 +21,20 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: { 
                         brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 900: '#14532d' }
+                    },
+                    animation: {
+                        'marquee': 'marquee 25s linear infinite',
+                        'fade-in-up': 'fadeInUp 0.5s ease-out'
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(-100%)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
                     }
                 }
             }
@@ -45,13 +59,13 @@
         .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
         .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
         
-        /* Admin Grid */
-        .admin-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; height: 100%; overflow: hidden; }
-        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; overflow-y: auto; } }
-
         /* Delete Button Hover */
         .delete-btn-hover { opacity: 0; transition: opacity 0.2s; }
         .job-card:hover .delete-btn-hover { opacity: 1; }
+
+        /* Pop-up Animation */
+        .pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col min-h-screen">
@@ -85,6 +99,19 @@
         </div>
     </header>
 
+    <!-- HABER BANDI (MARQUEE) -->
+    <div class="bg-indigo-900 text-white text-xs font-medium py-2 overflow-hidden relative z-20 shadow-inner">
+        <div class="whitespace-nowrap animate-marquee flex gap-12 items-center">
+            <span><i class="fa-solid fa-bullhorn text-yellow-400 mr-2"></i>Türkiye'nin en büyük öğretmen iş ağına hoş geldiniz!</span>
+            <span><i class="fa-solid fa-circle-check text-green-400 mr-2"></i>İlan vermek ve iş başvurusu yapmak tamamen ücretsizdir.</span>
+            <span><i class="fa-solid fa-shield-halved text-blue-400 mr-2"></i>İlanlarınızı oluştururken belirlediğiniz PİN kodu ile dilediğiniz zaman kaldırabilirsiniz.</span>
+            <span><i class="fa-solid fa-user-group text-purple-400 mr-2"></i>Hem kurumlar personel arayabilir, hem de öğretmenler iş arayışlarını duyurabilir.</span>
+            <!-- Tekrar (Kayan yazının kesintisiz görünmesi için) -->
+             <span><i class="fa-solid fa-bullhorn text-yellow-400 mr-2"></i>Türkiye'nin en büyük öğretmen iş ağına hoş geldiniz!</span>
+            <span><i class="fa-solid fa-circle-check text-green-400 mr-2"></i>İlan vermek ve iş başvurusu yapmak tamamen ücretsizdir.</span>
+        </div>
+    </div>
+
     <main class="flex-grow container mx-auto px-4 py-6 max-w-6xl">
 
         <!-- TAB BUTTONS MOBILE -->
@@ -101,7 +128,7 @@
         <div id="tab-jobs" class="tab-content active">
             
             <!-- FİLTRELER -->
-            <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 mb-8">
+            <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 mb-8 animate-fade-in-up">
                 
                 <!-- İLAN TİPİ SEÇİCİ -->
                 <div class="flex p-1 bg-slate-100 rounded-xl mb-5 max-w-lg mx-auto">
@@ -132,7 +159,7 @@
             </div>
 
             <!-- İLAN KARTLARI CONTAINER -->
-            <div id="jobs-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div id="jobs-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-10">
                 <!-- Javascript ile doldurulacak -->
             </div>
             
@@ -145,8 +172,8 @@
         </div>
 
         <!-- İLAN VERME FORMU -->
-        <div id="tab-post" class="tab-content max-w-2xl mx-auto">
-            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-100 relative overflow-hidden">
+        <div id="tab-post" class="tab-content max-w-2xl mx-auto pb-10">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-100 relative overflow-hidden animate-fade-in-up">
                 
                 <div class="text-center mb-8 relative z-10">
                     <h2 class="text-2xl font-black text-slate-800 tracking-tight">Ücretsiz İlan Oluştur</h2>
@@ -254,6 +281,42 @@
         </div>
 
     </main>
+
+    <!-- WELCOME POPUP (YENİ) -->
+    <div id="welcome-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative pop-in">
+            <button onclick="closeWelcomeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            
+            <div class="text-center mb-6 mt-2">
+                <div class="w-20 h-20 bg-gradient-to-br from-indigo-500 to-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg shadow-indigo-200 animate-bounce">
+                    <i class="fa-solid fa-handshake"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-2">Hoş Geldiniz!</h2>
+                <p class="text-sm text-slate-500 px-4">Türkiye'nin en kapsamlı <strong>Öğretmen İş Ağı</strong> platformundasınız.</p>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <div class="flex items-start gap-3 p-3 bg-green-50 rounded-xl border border-green-100">
+                    <div class="text-green-600 mt-0.5"><i class="fa-solid fa-building-circle-check"></i></div>
+                    <div>
+                        <h4 class="text-xs font-bold text-green-800">Kurumlar</h4>
+                        <p class="text-[11px] text-green-600 leading-tight">Aradığınız eğitimciyi bulmak için ücretsiz ilan verin.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                    <div class="text-blue-600 mt-0.5"><i class="fa-solid fa-user-graduate"></i></div>
+                    <div>
+                        <h4 class="text-xs font-bold text-blue-800">Öğretmenler</h4>
+                        <p class="text-[11px] text-blue-600 leading-tight">Kendinizi tanıtan ilanlar oluşturarak kurumların size ulaşmasını sağlayın.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeWelcomeModal()" class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-700 transition shadow-lg shadow-slate-200">
+                Hemen Başla 🚀
+            </button>
+        </div>
+    </div>
 
     <!-- DELETE MODAL -->
     <div id="delete-modal" class="fixed inset-0 bg-slate-900/90 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
@@ -428,6 +491,11 @@
             populateCitySelects();
             populateRoles();
             
+            // Pop-up kontrolü (Sayfa yüklendiğinde aç)
+            setTimeout(() => {
+                document.getElementById('welcome-modal').classList.remove('hidden');
+            }, 500);
+
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -531,6 +599,15 @@
                 btnPost.className = t === 'post' ? activeClass : passiveClass;
             }
         };
+
+        // --- POPUP LOGIC ---
+        window.closeWelcomeModal = () => {
+            const modal = document.getElementById('welcome-modal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
 
         // --- FORM LOGIC ---
         window.updateFormLabels = () => {
