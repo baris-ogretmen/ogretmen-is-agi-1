@@ -23,7 +23,7 @@
                         brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 900: '#14532d' }
                     },
                     animation: {
-                        'marquee': 'marquee 25s linear infinite',
+                        'marquee': 'marquee 35s linear infinite',
                         'fade-in-up': 'fadeInUp 0.5s ease-out'
                     },
                     keyframes: {
@@ -66,6 +66,10 @@
         /* Pop-up Animation */
         .pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+        
+        /* Marquee Container */
+        .marquee-container { overflow: hidden; white-space: nowrap; position: relative; width: 100%; }
+        .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 35s linear infinite; }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col min-h-screen">
@@ -99,16 +103,12 @@
         </div>
     </header>
 
-    <!-- HABER BANDI (MARQUEE) -->
-    <div class="bg-indigo-900 text-white text-xs font-medium py-2 overflow-hidden relative z-20 shadow-inner">
-        <div class="whitespace-nowrap animate-marquee flex gap-12 items-center">
-            <span><i class="fa-solid fa-bullhorn text-yellow-400 mr-2"></i>Türkiye'nin en büyük öğretmen iş ağına hoş geldiniz!</span>
-            <span><i class="fa-solid fa-circle-check text-green-400 mr-2"></i>İlan vermek ve iş başvurusu yapmak tamamen ücretsizdir.</span>
-            <span><i class="fa-solid fa-shield-halved text-blue-400 mr-2"></i>İlanlarınızı oluştururken belirlediğiniz PİN kodu ile dilediğiniz zaman kaldırabilirsiniz.</span>
-            <span><i class="fa-solid fa-user-group text-purple-400 mr-2"></i>Hem kurumlar personel arayabilir, hem de öğretmenler iş arayışlarını duyurabilir.</span>
-            <!-- Tekrar (Kayan yazının kesintisiz görünmesi için) -->
-             <span><i class="fa-solid fa-bullhorn text-yellow-400 mr-2"></i>Türkiye'nin en büyük öğretmen iş ağına hoş geldiniz!</span>
-            <span><i class="fa-solid fa-circle-check text-green-400 mr-2"></i>İlan vermek ve iş başvurusu yapmak tamamen ücretsizdir.</span>
+    <!-- DİNAMİK HABER BANDI (MARQUEE) -->
+    <div class="bg-indigo-900 text-white text-xs font-medium py-2 overflow-hidden relative z-20 shadow-inner border-b border-indigo-800">
+        <div class="marquee-container">
+            <div id="marquee-text" class="marquee-content flex gap-8 items-center">
+                <span><i class="fa-solid fa-circle-notch fa-spin text-indigo-400 mr-2"></i>Sistem verileri yükleniyor...</span>
+            </div>
         </div>
     </div>
 
@@ -282,8 +282,19 @@
 
     </main>
 
-    <!-- WELCOME POPUP (YENİ) -->
-    <div id="welcome-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <!-- DİNAMİK DUYURU MODAL (REFERANS KODDAN ALINDI) -->
+    <div id="user-announcement-modal" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] p-8 w-full max-w-sm text-center shadow-2xl pop-in relative border-4 border-indigo-600">
+            <button onclick="document.getElementById('user-announcement-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6 animate-bounce"><i class="fa-solid fa-bell"></i></div>
+            <h3 class="text-xl font-black text-slate-800 mb-3">DUYURU</h3>
+            <p id="user-popup-content" class="text-slate-600 mb-8 font-medium text-sm leading-relaxed whitespace-pre-line">...</p>
+            <button onclick="document.getElementById('user-announcement-modal').classList.add('hidden')" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-200">Tamam, Okudum</button>
+        </div>
+    </div>
+
+    <!-- WELCOME POPUP (MEVCUT - EĞER DUYURU YOKSA GÖSTERİLEBİLİR) -->
+    <div id="welcome-modal" class="fixed inset-0 bg-slate-900/80 z-[90] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative pop-in">
             <button onclick="closeWelcomeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
             
@@ -353,16 +364,36 @@
             <div id="admin-controls-view" class="hidden h-full flex flex-col">
                 <div class="flex items-center gap-3 mb-6 border-b pb-4">
                     <div class="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-shield-halved"></i></div>
-                    <div><h3 class="font-bold text-lg text-slate-800">İlan Yönetimi</h3><p class="text-xs text-slate-500">Onay bekleyen ve aktif ilanlar.</p></div>
+                    <div><h3 class="font-bold text-lg text-slate-800">Yönetim Merkezi</h3><p class="text-xs text-slate-500">İlanlar ve sistem ayarları.</p></div>
                     <button onclick="logoutAdmin()" class="ml-auto bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-200">Çıkış</button>
                 </div>
                 
-                <div class="flex-1 overflow-y-auto custom-scroll">
-                     <div class="p-3 bg-slate-100 border-b flex justify-between items-center text-xs font-bold text-slate-600 mb-2 rounded-t-lg">
-                        <span>Tüm İlanlar</span>
-                        <span id="admin-record-count" class="bg-white px-2 py-0.5 rounded shadow-sm text-slate-800">0</span>
+                <div class="admin-grid">
+                     <!-- SOL: KONFİGÜRASYON (YENİ) -->
+                     <div class="overflow-y-auto pr-2 space-y-4 custom-scroll">
+                        <!-- Pop-up Ayarı -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-indigo-700 text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-comment-dots"></i> Pop-up Duyuru</h4>
+                            <textarea id="admin-input-popup" class="w-full p-3 rounded-lg border border-slate-300 text-xs mb-2 outline-none" rows="3" placeholder="Duyuru metni... Link yazarsan otomatik tıklanabilir olur."></textarea>
+                            <button onclick="saveConfig('popup')" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700">Duyuruyu Yayınla</button>
+                        </div>
+
+                        <!-- Haber Bandı Ayarı -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-orange-600 text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-scroll"></i> Haber Bandı (Marquee)</h4>
+                            <textarea id="admin-input-news" class="w-full p-3 rounded-lg border border-slate-300 text-xs mb-2 outline-none" rows="2" placeholder="Üstte kayan yazı... HTML kullanabilirsin."></textarea>
+                            <button onclick="saveConfig('news')" class="w-full bg-orange-500 text-white py-2 rounded-lg text-xs font-bold hover:bg-orange-600">Bandı Güncelle</button>
+                        </div>
+                     </div>
+
+                    <!-- SAĞ: İLAN LİSTESİ -->
+                    <div class="flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden shadow-inner h-full">
+                        <div class="p-3 bg-slate-100 border-b flex justify-between items-center text-xs font-bold text-slate-600">
+                            <span>Tüm İlanlar</span>
+                            <span id="admin-record-count" class="bg-white px-2 py-0.5 rounded shadow-sm text-slate-800">0</span>
+                        </div>
+                        <div id="admin-records-list" class="flex-1 overflow-y-auto p-2 space-y-2 custom-scroll bg-slate-50"></div>
                     </div>
-                    <div id="admin-records-list" class="space-y-2"></div>
                 </div>
             </div>
         </div>
@@ -483,6 +514,7 @@
         
         let db, auth, user;
         let globalJobs = [];
+        let globalConfig = { news: "", popup: "" };
         let isAdmin = false;
         let activeFilterType = 'all';
         let deleteTargetId = null;
@@ -491,11 +523,9 @@
             populateCitySelects();
             populateRoles();
             
-            // Pop-up kontrolü (Sayfa yüklendiğinde aç)
-            setTimeout(() => {
-                document.getElementById('welcome-modal').classList.remove('hidden');
-            }, 500);
-
+            // Welcome Pop-up kontrolü (Sadece eğer dinamik popup yoksa gösterilir, o logic aşağıda)
+            // Ama şimdilik animasyon için manuel gizli başlasın
+            
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -505,6 +535,7 @@
                     if(u) { 
                         user = u; 
                         startRealtimeListener(); 
+                        startConfigListener(); // AYAR DİNLEYİCİ
                         
                         if(!u.isAnonymous) {
                             isAdmin = true;
@@ -534,6 +565,63 @@
                 if(isAdmin) renderAdminList(); 
             });
         }
+
+        // --- KONFİGÜRASYON DİNLEME VE UYGULAMA (YENİ) ---
+        function startConfigListener() {
+            onSnapshot(doc(db, "is_config", "global"), (docSnap) => {
+                if (docSnap.exists()) {
+                    globalConfig = docSnap.data();
+                    applyConfig();
+                }
+            });
+        }
+
+        function applyConfig() {
+            // 1. Haber Bandı
+            if(globalConfig.news) {
+                // Güvenli HTML için basit replace veya innerText
+                const marqueeEl = document.getElementById('marquee-text');
+                // Kullanıcı HTML girebilsin diye innerHTML yapıyorum ama dikkatli olmalı (Admin only feature)
+                // Ayrıca marquee düzgün görünsün diye içeriği 2 kez kopyalayabiliriz ama basit metin de yeterli
+                // Kayan yazı içinde iconlar da çalışsın
+                marqueeEl.innerHTML = globalConfig.news;
+            }
+
+            // 2. Popup Kontrolü
+            let showWelcome = true;
+            if(globalConfig.popup && globalConfig.popup.trim() !== "") {
+                if(sessionStorage.getItem('last_popup_job') !== globalConfig.popup) {
+                    const popupText = globalConfig.popup;
+                    // Linkleri tıklanabilir yap
+                    const linkedText = popupText.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-indigo-600 underline font-bold hover:text-indigo-800">$1</a>');
+                    
+                    document.getElementById('user-popup-content').innerHTML = linkedText;
+                    document.getElementById('user-announcement-modal').classList.remove('hidden');
+                    sessionStorage.setItem('last_popup_job', globalConfig.popup);
+                    showWelcome = false; // Duyuru varsa karşılama ekranını ez
+                }
+            }
+
+            // Eğer duyuru popup'ı çıkmadıysa, standart welcome popup'ı göster (ilk giriş ise)
+            if(showWelcome && !sessionStorage.getItem('welcome_seen')) {
+                setTimeout(() => {
+                    document.getElementById('welcome-modal').classList.remove('hidden');
+                }, 800);
+            }
+        }
+
+        // Admin Tarafından Ayar Kaydetme
+        window.saveConfig = async (type) => {
+            if(!isAdmin) return;
+            const val = document.getElementById(`admin-input-${type}`).value;
+            const updateData = {};
+            updateData[type] = val;
+            
+            try {
+                await setDoc(doc(db, "is_config", "global"), updateData, { merge: true });
+                showToast("Ayar başarıyla güncellendi!", "success");
+            } catch(e) { showToast("Hata: " + e.message, "error"); }
+        };
 
         function populateCitySelects() {
             const entryCity = document.getElementById('entry-city');
@@ -606,6 +694,7 @@
             modal.style.opacity = '0';
             setTimeout(() => {
                 modal.classList.add('hidden');
+                sessionStorage.setItem('welcome_seen', 'true');
             }, 300);
         }
 
@@ -860,6 +949,9 @@
                     document.getElementById('admin-login-view').classList.add('hidden');
                     document.getElementById('admin-controls-view').classList.remove('hidden');
                     renderAdminList();
+                    // Admin paneli açıldığında mevcut configleri inputlara doldur
+                    document.getElementById('admin-input-news').value = globalConfig.news || "";
+                    document.getElementById('admin-input-popup').value = globalConfig.popup || "";
                 })
                 .catch(() => document.getElementById('admin-msg').classList.remove('hidden'));
         };
