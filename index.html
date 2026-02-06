@@ -23,14 +23,9 @@
                         brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 900: '#14532d' }
                     },
                     animation: {
-                        'marquee': 'marquee 35s linear infinite',
                         'fade-in-up': 'fadeInUp 0.5s ease-out'
                     },
                     keyframes: {
-                        marquee: {
-                            '0%': { transform: 'translateX(100%)' },
-                            '100%': { transform: 'translateX(-100%)' },
-                        },
                         fadeInUp: {
                             '0%': { opacity: '0', transform: 'translateY(20px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -67,9 +62,14 @@
         .pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
         
-        /* Marquee Container */
+        /* Marquee Container Fix */
         .marquee-container { overflow: hidden; white-space: nowrap; position: relative; width: 100%; }
-        .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 35s linear infinite; }
+        .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 45s linear infinite; }
+        
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col min-h-screen">
@@ -293,20 +293,37 @@
         </div>
     </div>
 
-    <!-- WELCOME POPUP (VARSAYILAN - ARTIK HEP GÖRÜNÜR) -->
+    <!-- WELCOME POPUP (HER AÇILIŞTA GÖRÜNÜR) -->
     <div id="welcome-modal" class="fixed inset-0 bg-slate-900/80 z-[90] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative pop-in">
             <button onclick="closeWelcomeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
             
-            <div class="text-center mb-6 mt-2">
-                <div class="w-20 h-20 bg-gradient-to-br from-indigo-500 to-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg shadow-indigo-200 animate-bounce">
+            <div class="text-center mb-4 mt-2">
+                <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-lg shadow-indigo-200 animate-bounce">
                     <i class="fa-solid fa-handshake"></i>
                 </div>
-                <h2 class="text-2xl font-black text-slate-800 mb-2">Hoş Geldiniz!</h2>
-                <p class="text-sm text-slate-500 px-4">Türkiye'nin en kapsamlı <strong>Öğretmen İş Ağı</strong> platformundasınız.</p>
+                <h2 class="text-xl font-black text-slate-800 mb-1">Hoş Geldiniz!</h2>
+                <p class="text-xs text-slate-500 px-4">Türkiye'nin en kapsamlı <strong>Öğretmen İş Ağı</strong>.</p>
             </div>
 
-            <div class="space-y-4 mb-6">
+            <!-- BARIŞ ÖĞRETMEN REKLAM ALANI -->
+            <div class="bg-gradient-to-r from-violet-50 to-purple-50 p-4 rounded-xl border border-violet-100 mb-5 text-center shadow-sm relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-12 h-12 bg-violet-200 rounded-full opacity-20 group-hover:scale-150 transition"></div>
+                
+                <p class="text-xs text-violet-800 font-bold mb-1 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-book-open text-violet-500"></i> Ders Materyali İhtiyacınız mı Var?
+                </p>
+                <p class="text-[10px] text-slate-600 mb-3 leading-snug px-2">
+                    Değerli arkadaşlar, güncel dijital eğitim içerikleri ve sınıf içi etkinlikler için sitemi inceleyebilirsiniz.
+                </p>
+                
+                <a href="https://baris-ogretmen.github.io/site-1/" target="_blank" class="inline-flex items-center gap-2 bg-violet-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg hover:bg-violet-700 transition shadow-md shadow-violet-200">
+                    <i class="fa-solid fa-link"></i> Siteye Git
+                </a>
+            </div>
+
+            <!-- KURUM VS ÖĞRETMEN KUTULARI -->
+            <div class="space-y-3 mb-5">
                 <div class="flex items-start gap-3 p-3 bg-green-50 rounded-xl border border-green-100">
                     <div class="text-green-600 mt-0.5"><i class="fa-solid fa-building-circle-check"></i></div>
                     <div>
@@ -323,7 +340,7 @@
                 </div>
             </div>
 
-            <button onclick="closeWelcomeModal()" class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-700 transition shadow-lg shadow-slate-200">
+            <button onclick="closeWelcomeModal()" class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl text-sm hover:bg-slate-700 transition shadow-lg shadow-slate-200">
                 Hemen Başla 🚀
             </button>
         </div>
